@@ -1,5 +1,12 @@
 pipeline {
     agent any
+     parameters {
+     choice(
+        name: 'TARGET_ENV',
+        choices: ['dev', 'test'],
+        description: 'Select the target environment for this CI run'
+    )
+}
 
     options {
         timestamps()
@@ -28,6 +35,13 @@ pipeline {
                 '''
             }
         }
+
+        stage('Run Configuration') {
+             steps {
+                    echo "Selected environment: ${params.TARGET_ENV}"
+                    echo "Application: ${env.APP_NAME}"
+             }
+          }
 
         stage('Unit Tests') {
             steps {
