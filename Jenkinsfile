@@ -1,12 +1,13 @@
 pipeline {
     agent any
-     parameters {
-     choice(
-        name: 'TARGET_ENV',
-        choices: ['dev', 'test'],
-        description: 'Select the target environment for this CI run'
-    )
-}
+
+    parameters {
+        choice(
+            name: 'TARGET_ENV',
+            choices: ['dev', 'test'],
+            description: 'Select the target environment for this CI run'
+        )
+    }
 
     options {
         timestamps()
@@ -37,11 +38,11 @@ pipeline {
         }
 
         stage('Run Configuration') {
-             steps {
-                    echo "Selected environment: ${params.TARGET_ENV}"
-                    echo "Application: ${env.APP_NAME}"
-             }
-          }
+            steps {
+                echo "Selected environment: ${params.TARGET_ENV}"
+                echo "Application: ${env.APP_NAME}"
+            }
+        }
 
         stage('Unit Tests') {
             steps {
@@ -56,7 +57,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Checking Python source syntax..."
-                    python3 -m compileall -q app tests
+                    python3 -m compileall -q app test
                     echo "Compile check passed."
                 '''
             }
