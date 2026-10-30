@@ -72,7 +72,7 @@ import zipfile
 
 files = [
     "app/calculator.py",
-    "tests/test_calculator.py"
+    "test/test_calculator.py"
 ]
 
 with zipfile.ZipFile(
