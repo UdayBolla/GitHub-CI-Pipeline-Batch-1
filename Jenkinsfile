@@ -47,7 +47,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Running automated unit tests..."
-                    python3 -m unittest discover -s tests -v
+                    python3 -m unittest discover -s test -v
                 '''
             }
         }
