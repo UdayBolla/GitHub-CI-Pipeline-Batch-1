@@ -29,5 +29,5 @@ class TestCalculator(unittest.TestCase):
         with self.assertRaises(ValueError):
             divide(10, 0)
 
-if name == "__main__":
+if __name__ == "__main__":
     unittest.main()
