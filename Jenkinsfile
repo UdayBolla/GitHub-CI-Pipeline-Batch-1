@@ -53,6 +53,31 @@ pipeline {
             }
         }
 
+
+        stage('Docker Build') {
+    steps {
+        script {
+            env.IMAGE_TAG = "batch1-calculator:${env.BUILD_NUMBER}"
+        }
+
+        sh '''
+            echo "Building Docker image..."
+            docker build -t "$IMAGE_TAG" .
+            echo "Docker image build completed."
+        '''
+    }
+}
+
+stage('Docker Image Validation') {
+    steps {
+        sh '''
+            echo "Checking the Docker image..."
+            docker image inspect "$IMAGE_TAG" >/dev/null
+            echo "Docker image exists and is readable."
+        '''
+    }
+}
+
         stage('Compile Check') {
             steps {
                 sh '''
