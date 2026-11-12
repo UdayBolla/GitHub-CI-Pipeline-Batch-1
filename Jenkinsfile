@@ -79,34 +79,63 @@ stage('Docker Image Validation') {
 }
 
 
-        stage('Push Docker Image') {
-    steps {
-        withCredentials([
-            usernamePassword(
-                credentialsId: 'dockerhub-credentials',
-                usernameVariable: 'DOCKERHUB_USERNAME',
-                passwordVariable: 'DOCKERHUB_TOKEN'
-            )
-        ]) {
-            sh '''
-                set +x
+        stage('Push Docker Image to AWS ECR') {
+            steps {
+                sh '''
+                    set -eu
 
-                IMAGE_REPO="$DOCKERHUB_USERNAME/batch1-calculator"
-                VERSIONED_IMAGE="$IMAGE_REPO:$BUILD_NUMBER"
+                    echo "Checking AWS CLI..."
+                    aws --version
 
-                echo "$DOCKERHUB_TOKEN" | docker login \
-                    --username "$DOCKERHUB_USERNAME" \
-                    --password-stdin
+                    echo "Checking AWS identity..."
+                    aws sts get-caller-identity
 
-                docker tag "$IMAGE_TAG" "$VERSIONED_IMAGE"
+                    AWS_REGION="ap-southeast-1"
 
-                docker push "$VERSIONED_IMAGE"
+                    AWS_ACCOUNT_ID=$(aws sts get-caller-identity \
+                        --query Account \
+                        --output text)
 
-                docker logout
-            '''
+                    ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+                    ECR_REPOSITORY="batch1-calculator"
+
+                    ECR_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}"
+
+                    echo "AWS account: ${AWS_ACCOUNT_ID}"
+                    echo "AWS region: ${AWS_REGION}"
+                    echo "ECR repository: ${ECR_REPOSITORY}"
+                    echo "Image tag: ${BUILD_NUMBER}"
+
+                    echo "Authenticating Docker with Amazon ECR..."
+
+                    aws ecr get-login-password \
+                        --region "$AWS_REGION" | \
+                        docker login \
+                            --username AWS \
+                            --password-stdin "$ECR_REGISTRY"
+
+                    echo "Tagging the existing Docker image..."
+
+                    docker tag "$IMAGE_TAG" "$ECR_IMAGE"
+
+                    echo "Pushing Docker image to Amazon ECR..."
+
+                    docker push "$ECR_IMAGE"
+
+                    echo "Verifying the image in ECR..."
+
+                    aws ecr describe-images \
+                        --repository-name "$ECR_REPOSITORY" \
+                        --image-ids imageTag="$BUILD_NUMBER" \
+                        --region "$AWS_REGION"
+
+                    echo "Image successfully published and verified in ECR."
+
+                    docker logout "$ECR_REGISTRY" || true
+                '''
+            }
         }
-    }
-}
 
         stage('Compile Check') {
             steps {
